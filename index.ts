@@ -1,7 +1,11 @@
-import { SignJWT, jwtVerify } from "jose";
+import JwtService from "./services/JwtService";
 
 type WebSocketData = {
   token: string;
+};
+
+type JwtPayload = {
+  username: string;
 };
 
 Bun.serve<WebSocketData>({
@@ -16,16 +20,7 @@ Bun.serve<WebSocketData>({
 
       const { username } = data;
 
-      const secret = new TextEncoder().encode(process.env.JWT_SECRET);
-      const alg = "HS256";
-
-      const token = await new SignJWT({ username })
-        .setProtectedHeader({ alg })
-        .setIssuedAt()
-        .setIssuer(process.env.JWT_ISSUER!)
-        .setAudience(process.env.JWT_AUDIENCE!)
-        .setExpirationTime("24h")
-        .sign(secret);
+      const token = await new JwtService<JwtPayload>().sign({ username });
 
       return Response.json({ token }, { status: 200 });
     }
@@ -45,13 +40,9 @@ Bun.serve<WebSocketData>({
   },
   websocket: {
     async message(ws, message) {
-      const secret = new TextEncoder().encode(process.env.JWT_SECRET);
-      const {
-        payload: { username },
-      } = await jwtVerify(ws.data.token, secret, {
-        issuer: process.env.JWT_ISSUER!,
-        audience: process.env.JWT_AUDIENCE!,
-      });
+      const { username } = await new JwtService<JwtPayload>().verify(
+        ws.data.token
+      );
 
       ws.send(`User ${username} Message ${message}`);
     },
