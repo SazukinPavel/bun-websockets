@@ -46,8 +46,18 @@ Bun.serve<WebSocketData>({
 
       ws.send(`User ${username} Message ${message}`);
     },
-    open(ws) {
-      console.log("socket open");
+    async open(ws) {
+      try {
+        if (!ws.data.token) {
+        }
+        const { username } = await new JwtService<JwtPayload>().verify(
+          ws.data.token
+        );
+
+        ws.send(`Hello ${username}`);
+      } catch {
+        ws.close(1011, "You not authorized");
+      }
     },
     close(ws, code, message) {
       console.log("socket close");
