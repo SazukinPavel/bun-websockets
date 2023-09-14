@@ -1,26 +1,35 @@
-import { Serve, Server, ServerWebSocket } from "bun";
+import { Serve, Server, ServerWebSocket, WebSocketHandler } from "bun";
 import JwtService from "./services/JwtService";
 import { RouteOptions, UserJwtPayload, WebSocketData } from "./types";
 import { AuthController, ChatController } from "./controllers";
 import { BaseController } from "./types/BaseController";
+import ChatWebsocket from "./websockets/ChatWebsocket";
+import { BaseWebsocket } from "./types/BaseWebsocket";
 
 export default class App {
   private serverOptions: Serve<WebSocketData>;
   private controllers: BaseController[];
+  private websocket: BaseWebsocket<WebSocketData>;
 
   public jwtService: JwtService<UserJwtPayload>;
 
   constructor() {
     this.jwtService = new JwtService();
     this.controllers = [new AuthController(this), new ChatController(this)];
+    this.websocket = new ChatWebsocket(this);
+
     this.serverOptions = {
       port: process.env.PORT,
       fetch: this.fetch.bind(this),
-      websocket: {
-        message: this.socketMessage.bind(this),
-        close: this.socketClose.bind(this),
-        open: this.openSocket.bind(this),
-      },
+      websocket: this.getWebsocketMethods(),
+    };
+  }
+
+  private getWebsocketMethods(): WebSocketHandler<WebSocketData> {
+    return {
+      message: this.websocket.message.bind(this.websocket),
+      close: this.websocket.close.bind(this.websocket),
+      open: this.websocket.open.bind(this.websocket),
     };
   }
 
@@ -89,31 +98,6 @@ export default class App {
     }
 
     return new Response("Not Founded", { status: 404 });
-  }
-
-  private async openSocket(ws: ServerWebSocket<WebSocketData>) {
-    try {
-      if (!ws.data.token) {
-      }
-      const { username } = await this.jwtService.verify(ws.data.token);
-
-      ws.send(`Hello ${username}`);
-    } catch {
-      ws.close(1011, "You not authorized");
-    }
-  }
-
-  private async socketClose() {
-    console.log("socket close");
-  }
-
-  private async socketMessage(
-    ws: ServerWebSocket<WebSocketData>,
-    message: string
-  ) {
-    const { username } = await this.jwtService.verify(ws.data.token);
-
-    ws.send(`User ${username} Message ${message}`);
   }
 
   start() {
