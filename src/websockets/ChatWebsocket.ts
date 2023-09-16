@@ -4,25 +4,29 @@ import { BaseWebsocket } from "../types/BaseWebsocket";
 
 class ChatWebsocket extends BaseWebsocket<WebSocketData> {
   async message(ws: ServerWebSocket<WebSocketData>, message: string | Buffer) {
-    const { username } = await this.app.jwtService.verify(ws.data.token);
+    const { topic } = ws.data;
 
-    ws.send(`User ${username} Message ${message}`);
+    ws.publish(topic, message);
   }
 
-  close() {
-    console.log("socket close");
+  async close(ws: ServerWebSocket<WebSocketData>) {
+    const { username } = await this.app.jwtService.verify(ws.data.token);
+    const { topic } = ws.data;
+
+    ws.publish(topic, `${username} leave chat`);
   }
 
   async open(ws: ServerWebSocket<WebSocketData>) {
     try {
       if (!ws.data.token) {
+        throw new Error();
       }
       const { username } = await this.app.jwtService.verify(ws.data.token);
+      const { topic } = ws.data;
 
-      ws.send(`Hello ${username}`);
+      ws.subscribe(topic);
+      ws.publish(topic, `${username} join chat`);
     } catch (e) {
-        console.log(e);
-        
       ws.close(1011, "You not authorized");
     }
   }
