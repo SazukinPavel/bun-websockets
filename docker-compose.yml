@@ -1,0 +1,12 @@
+version: "3"
+services:
+  server:
+    build: server/
+    environment:
+      - PORT=$SERVER_PORT
+      - JWT_SECRET=$JWT_SECRET
+      - JWT_ISSUER=$JWT_ISSUER
+      - JWT_AUDIENCE=$JWT_AUDIENCE
+      - JWT_EXPIRATION=$JWT_EXPIRATION
+    ports:
+      - $SERVER_PORT:$SERVER_PORT
