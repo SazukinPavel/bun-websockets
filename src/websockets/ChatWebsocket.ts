@@ -1,12 +1,14 @@
 import { ServerWebSocket } from "bun";
 import { WebSocketData } from "../types";
 import { BaseWebsocket } from "../types/BaseWebsocket";
+import { ChatMessage } from "../types/ChatMessage";
 
 class ChatWebsocket extends BaseWebsocket<WebSocketData> {
-  async message(ws: ServerWebSocket<WebSocketData>, message: string | Buffer) {
-    const { topic } = ws.data;
+  async message(ws: ServerWebSocket<WebSocketData>, message: string) {
+    const { topic, user } = ws.data;
 
-    ws.publish(topic, message);
+    const chatMessage = new ChatMessage(message, user);
+    this.publishTo(ws, topic, chatMessage);
   }
 
   async close(ws: ServerWebSocket<WebSocketData>) {
@@ -15,8 +17,10 @@ class ChatWebsocket extends BaseWebsocket<WebSocketData> {
       user: { username },
     } = ws.data;
 
+    const message = new ChatMessage(`${username} leave chat`);
+
     ws.unsubscribe(topic);
-    ws.publish(topic, `${username} leave chat`);
+    this.publishTo(ws, topic, message);
   }
 
   async open(ws: ServerWebSocket<WebSocketData>) {
@@ -27,10 +31,19 @@ class ChatWebsocket extends BaseWebsocket<WebSocketData> {
       } = ws.data;
 
       ws.subscribe(topic);
-      ws.publish(topic, `${username} join chat`);
+      const message = new ChatMessage(`${username} join chat`);
+      this.publishTo(ws, topic, message);
     } catch (e) {
       ws.close(1011, "You not authorized");
     }
+  }
+
+  publishTo(
+    ws: ServerWebSocket<WebSocketData>,
+    topic: string,
+    message: ChatMessage
+  ) {
+    ws.publish(topic, JSON.stringify(message));
   }
 }
 
