@@ -30,6 +30,7 @@ export default class App {
       message: this.websocket.message.bind(this.websocket),
       close: this.websocket.close.bind(this.websocket),
       open: this.websocket.open.bind(this.websocket),
+      publishToSelf: true,
       perMessageDeflate: true,
     };
   }
