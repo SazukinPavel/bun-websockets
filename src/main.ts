@@ -1,4 +1,4 @@
-import { Serve, Server, ServerWebSocket, WebSocketHandler } from "bun";
+import { Serve, Server, WebSocketHandler } from "bun";
 import JwtService from "./services/JwtService";
 import { RouteOptions, UserJwtPayload, WebSocketData } from "./types";
 import { AuthController, ChatController } from "./controllers";

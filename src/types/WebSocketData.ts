@@ -1,6 +1,8 @@
+import User from "./User";
+
 type WebSocketData = {
-  token: string;
-  topic:string
+  user: User;
+  topic: string;
 };
 
 export default WebSocketData;

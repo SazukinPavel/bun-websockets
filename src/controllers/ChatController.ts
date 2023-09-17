@@ -9,7 +9,7 @@ class ChatController extends BaseController {
   async chat(req: Request, server: Server) {
     try{
       const data: WebSocketData = {
-        token: req.headers.get("X-Token")!,
+        user: await this.app.jwtService.verify(req.headers.get("X-Token")!),
         topic: new URL(req.url).searchParams.get("topic") || "all",
       };
   
@@ -17,7 +17,7 @@ class ChatController extends BaseController {
         return;
       }
     }finally{
-      return new Response("Upgrade failed :(", { status: 500 });
+      return new Response("Upgrade failed :(", { status: 401 });
     }
   }
 }
