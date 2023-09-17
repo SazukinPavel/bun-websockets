@@ -7,16 +7,19 @@ import { WebSocketData } from "../types";
 class ChatController extends BaseController {
   @Route()
   async chat(req: Request, server: Server) {
-    try{
+    try {
+      const user = await this.app.jwtService.verify(
+        req.headers.get("X-Token")!
+      );
       const data: WebSocketData = {
-        user: await this.app.jwtService.verify(req.headers.get("X-Token")!),
+        user: { username: user.username },
         topic: new URL(req.url).searchParams.get("topic") || "all",
       };
-  
+
       if (server.upgrade(req, { data })) {
         return;
       }
-    }finally{
+    } finally {
       return new Response("Upgrade failed :(", { status: 401 });
     }
   }
