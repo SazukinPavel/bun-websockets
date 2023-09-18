@@ -10,3 +10,10 @@ services:
       - JWT_EXPIRATION=$JWT_EXPIRATION
     ports:
       - $SERVER_PORT:$SERVER_PORT
+  client:
+    build: client/
+    environment:
+      - CLIENT_PORT=$CLIENT_PORT
+      - CLIENT_HOST=$CLIENT_HOST
+    ports:
+      - $CLIENT_PORT:$CLIENT_PORT
